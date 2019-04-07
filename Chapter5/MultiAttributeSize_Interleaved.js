@@ -1,11 +1,12 @@
-// RotatedTriangle_Matrix4.js
+// MultiAttributeSize_Interleaved.js
 
 // 顶点着色器程序
 var VSHADER_SOURCE = 
     'attribute vec4 a_Position;\n' +
-    'uniform mat4 u_xformMatrix;\n' +
+    'attribute float a_PointSize;\n' +
     'void main() {\n' +
-    ' gl_Position = u_xformMatrix * a_Position;\n' +
+    ' gl_Position = a_Position;\n' + // 设置坐标
+    ' gl_PointSize = a_PointSize;\n' + // 设置尺寸
     '}\n';
 
 // 片元着色器程序
@@ -13,9 +14,6 @@ var FSHADER_SOURCE =
     'void main() {\n' +
     ' gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' + // 设置颜色
     '}\n';
-
-// 旋转角度
-var ANGLE = 90.0;
 
 function main() {
     
@@ -42,19 +40,6 @@ function main() {
         return;
     }
 
-    // 为旋转矩阵创建Matrix4对象
-    var xformMatrix = new Matrix4();
-    // 将xformMatrix设置为旋转矩阵
-    xformMatrix.setRotate(ANGLE, 0, 0, 1);
-
-    // 将旋转矩阵传输给顶点着色器
-    var u_xformMatrix = gl.getUniformLocation(gl.program, 'u_xformMatrix');
-    if (u_xformMatrix < 0) {
-        console.log('Failed to get the storage location of u_xformMatrix');
-        return;
-    }
-    gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix.elements);
-
     // 设置canvas的背景色
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -62,39 +47,46 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // 绘制三个点
-    gl.drawArrays(gl.TRIANGLES, 0, n);  // n=3
-    
+    gl.drawArrays(gl.POINTS, 0, n);  // n=3
 }
 
 function initVertexBuffers(gl) {
-    var vertices = new Float32Array([
-        0.0, 0.5, -0.5, -0.5, 0.5, -0.5
+    var verticesSizes = new Float32Array([
+        // 顶点坐标和点的尺寸
+        0.0, 0.5, 10.0,  // 第1个点
+        -0.5, -0.5, 20.0,  // 第2个点
+        0.5, -0.5, 30.0  // 第3个点
     ]);
     var n = 3;  // 点的个数
 
     // 创建缓冲区对象
-    var vertexBuffer = gl.createBuffer();
-    if (!vertexBuffer) {
+    var verticesSizeBuffer = gl.createBuffer();
+    if (!verticesSizeBuffer) {
         console.log('Failed to create the buffer object');
         return -1;
     }
 
-    // 将缓冲区对象绑定到目标
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    // 将顶点坐标和尺寸写入缓存区并开启
+    gl.bindBuffer(gl.ARRAY_BUFFER, verticesSizeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, verticesSizes, gl.STATIC_DRAW);
 
-    // 向缓冲区对象中写入数据
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    var FSIZE = verticesSizes.BYTES_PER_ELEMENT;
+    // 获取a_Position的存储位置，分配缓存区并开启
     var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
     if (a_Position < 0) {
         console.log('Failed to get the storage location of a_Position');
         return;
     }
-
-    // 将缓冲区对象分配给a_Position变量
-    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
-
-    // 连接a_Position变量与分配给它的缓冲区对象
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, FSIZE*3, 0);
     gl.enableVertexAttribArray(a_Position);
+    // 获取a_PointSize的存储位置，分配缓存区并开启
+    var a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
+    if (a_PointSize < 0) {
+        console.log('Failed to get the storage location of a_PointSize');
+        return;
+    }
+    gl.vertexAttribPointer(a_PointSize, 1, gl.FLOAT, false, FSIZE*3, FSIZE*2);
+    gl.enableVertexAttribArray(a_PointSize);
 
     return n;
 }
