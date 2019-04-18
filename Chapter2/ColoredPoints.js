@@ -53,24 +53,23 @@ function main() {
         click(ev, gl, canvas, a_Position, u_FragColor);
     }
 
-    // 将顶点位置传输给attribute变量
-    gl.vertexAttrib3f(a_Position, 0.0, 0.0, 0.0);
-
     // 设置canvas的背景色
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     // 清空canvas
     gl.clear(gl.COLOR_BUFFER_BIT);
 }
+
 var g_points = [];  // 鼠标点击位置数组
 var g_colors = [];  // 存储点颜色的数组
+
 function click(ev, gl, canvas, a_Position, u_FragColor) {
 
     var x = ev.clientX;  // 鼠标点击处的x坐标
     var y = ev.clientY;  // 鼠标点击处的y坐标
     var rect = ev.target.getBoundingClientRect();
-    x = ((x - rect.left) - canvas.height/2)/(canvas.height/2);
-    y = (canvas.width/2 - (y - rect.top))/(canvas.width/2);
+    x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
+    y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
     
     // 将坐标存储到g_points数组中
     g_points.push([x, y]);
